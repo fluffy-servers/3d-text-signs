@@ -102,16 +102,20 @@ if CLIENT then
             if not valid then return end
         end
 
-        -- Update positions
-        for _, v in pairs(self.ClientsideModels) do
-            local m = v[1]
-            local lpos = v[2]
+        -- Update positions if we've moved the base
+        if not self.LastPos or self:GetPos() != self.LastPos then
+            for _, v in pairs(self.ClientsideModels) do
+                local m = v[1]
+                local lpos = v[2]
 
-            local pos, ang = LocalToWorld(lpos, Angle(-90, -90, 0), self:GetPos(), self:GetAngles())
-            m:SetPos(pos)
-            m:SetAngles(ang)
-            m:SetSkin(skin)
-            m:SetColor(color)
+                local pos, ang = LocalToWorld(lpos, Angle(-90, -90, 0), self:GetPos(), self:GetAngles())
+                m:SetPos(pos)
+                m:SetAngles(ang)
+                m:SetSkin(skin)
+                m:SetColor(color)
+            end
+
+            self.LastPos = self:GetPos()
         end
     end
 end
