@@ -26,12 +26,12 @@ function ENT:Initialize()
     self:SetNWString("SignText", "FLUFFY")
     self:SetNWString("Font", "roboto")
     self:SetNWBool("Vertical", false)
-    self:SetNWVector("Color", Vector(255, 255, 255))
 end
 
 if CLIENT then
     ENT.ClientsideModels = {}
     ENT.Invalid = false
+    ENT.BaseAngle = Angle(0, 0, 0)
 
     function ENT:OnRemove()
         self:CleanupClientsideModels()
@@ -60,28 +60,32 @@ if CLIENT then
             return false
         end
 
-        local lpos = Vector(0, 10, 0)
+        local lpos = Vector(0, -10, 2)
         local spacing = 5
+        local current = 1
         for i = 1, #text do
-            local char = text:sub(i, i)
-
-            local pos, ang = LocalToWorld(lpos, Angle(-90, 90, 0), self:GetPos(), self:GetAngles())
-            local m = self:CreateLetterModel(font, char)
-            self.ClientsideModels[i] = {m, lpos}
+            local pos, ang = LocalToWorld(lpos, Angle(-90, -90, 0), self:GetPos(), self:GetAngles())
+            local m = self:CreateLetterModel(font, text:sub(i, i))
+            if not IsValid(m) then
+                lpos = lpos + Vector(12, 0, 0)
+                continue
+            end
+            self.ClientsideModels[current] = {m, lpos}
 
             local mins, maxs = m:GetModelBounds()
             if self:GetNWBool("Vertical", false) then
-                 lpos = lpos + Vector(0, (maxs[2] - mins[2]) * 1.5, 0)
+                lpos = lpos + Vector(0, (maxs[2] - mins[2]) * 1.5, 0)
             else
-                lpos = lpos + Vector((maxs[1] - mins[1]) * -4, 0, 0)
+                lpos = lpos + Vector((maxs[1] - mins[1]) * 4, 0, 0)
             end
+
+            current = current + 1
         end
 
         return true
     end
 
     function ENT:Draw()
-        self:DrawModel()
         if self.Invalid then return end
 
         local font = self:GetNWString("Font", "")
@@ -89,8 +93,7 @@ if CLIENT then
         if font == "" or text == "" then return end
 
         local skin = self:GetNWInt("Skin", 0)
-        local cvector = self:GetNWVector("Color", Vector(255, 255, 255))
-        local color = Color(cvector[1], cvector[2], cvector[3])
+        local color = self:GetColor()
 
         if #self.ClientsideModels != #text then
             self:CleanupClientsideModels()
@@ -100,11 +103,11 @@ if CLIENT then
         end
 
         -- Update positions
-        for i = 1, #text do
-            local m = self.ClientsideModels[i][1]
-            local lpos = self.ClientsideModels[i][2]
+        for _, v in pairs(self.ClientsideModels) do
+            local m = v[1]
+            local lpos = v[2]
 
-            local pos, ang = LocalToWorld(lpos, Angle(-90, 90, 0), self:GetPos(), self:GetAngles())
+            local pos, ang = LocalToWorld(lpos, Angle(-90, -90, 0), self:GetPos(), self:GetAngles())
             m:SetPos(pos)
             m:SetAngles(ang)
             m:SetSkin(skin)
